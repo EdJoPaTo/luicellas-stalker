@@ -11,8 +11,6 @@ use regex::Regex;
 const SENT_FILE: &str = "sent.txt";
 
 fn main() {
-    let content_regex = Regex::new(r#""contentUrl":"([^"]+)"#).unwrap();
-
     let bot_token = std::env::var("BOT_TOKEN").expect("BOT_TOKEN is not set");
     let bot = frankenstein::Api::new(bot_token);
 
@@ -31,7 +29,7 @@ fn main() {
 
             for url in picture_pages {
                 if !already_sent.contains(&url) {
-                    match handle_picture_page(&content_regex, &bot, &chat_id, &url) {
+                    match handle_picture_page(&bot, &chat_id, &url) {
                         Ok(_) => {
                             already_sent.push(url);
                         }
@@ -77,14 +75,15 @@ fn get_picture_urls() -> anyhow::Result<Vec<String>> {
 }
 
 fn handle_picture_page(
-    re: &Regex,
     bot: &frankenstein::Api,
     chat_id: &ChatIdEnum,
     url: &str,
 ) -> anyhow::Result<()> {
     println!("\nhandle_picture_page {}", url);
-    let urls = re
-        .captures_iter(&get(url)?)
+    let body = get(url)?;
+    let urls = Regex::new(r#""contentUrl":"([^"]+)"#)
+        .unwrap()
+        .captures_iter(&body)
         .map(|o| o[1].replace("\\/", "/"))
         .collect::<Vec<_>>();
 
