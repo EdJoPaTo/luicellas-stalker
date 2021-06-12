@@ -6,7 +6,7 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-Restart=always
+Restart=on-failure
 RestartSec=20
 Environment="BOT_TOKEN="
 ExecStart=/usr/local/bin/luicellas-stalker
