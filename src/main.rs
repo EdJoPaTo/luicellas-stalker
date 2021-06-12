@@ -13,7 +13,7 @@ fn main() {
     let bot_token = std::env::var("BOT_TOKEN").expect("BOT_TOKEN is not set");
     let bot = frankenstein::Api::new(bot_token);
 
-    let chat_id = ChatIdEnum::IsizeVariant(-1_001_306_037_773); // https://telegram.me/LuicellasLangeReihe
+    let chat_id = ChatIdEnum::IntegerVariant(-1_001_306_037_773); // https://telegram.me/LuicellasLangeReihe
     println!("Hello, world!");
 
     match get_picture_urls() {
