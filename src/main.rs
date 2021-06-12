@@ -60,8 +60,7 @@ fn get(url: &str) -> anyhow::Result<String> {
 
 fn get_picture_urls() -> anyhow::Result<Vec<String>> {
     let photo_page_regex =
-        Regex::new(r#"[^"]+facebook.com\\/luicellaslangereihe\\/photos\\/a[^"]+"#)
-            .unwrap();
+        Regex::new(r#"[^"]+facebook.com\\/luicellaslangereihe\\/photos\\/a[^"]+"#).unwrap();
     let main_body = get("https://de-de.facebook.com/pg/luicellaslangereihe/photos/")?;
     let mut picture_pages = Vec::new();
     for c in photo_page_regex.captures_iter(&main_body) {
