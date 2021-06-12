@@ -8,6 +8,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=20
+Environment="BOT_TOKEN="
 ExecStart=/usr/local/bin/luicellas-stalker
 WorkingDirectory=/var/local/lib/luicellas-stalker/
 User=pi
