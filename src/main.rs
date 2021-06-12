@@ -77,10 +77,10 @@ fn get_picture_urls() -> anyhow::Result<Vec<String>> {
 fn handle_picture_page(
     bot: &frankenstein::Api,
     chat_id: &ChatIdEnum,
-    url: &str,
+    page_url: &str,
 ) -> anyhow::Result<()> {
-    println!("\nhandle_picture_page {}", url);
-    let body = get(url)?;
+    println!("\nhandle_picture_page {}", page_url);
+    let body = get(page_url)?;
     let urls = Regex::new(r#""contentUrl":"([^"]+)"#)
         .unwrap()
         .captures_iter(&body)
@@ -90,11 +90,16 @@ fn handle_picture_page(
     for url in urls {
         println!("wait then send to telegram chat... {}", url);
         sleep(Duration::from_secs(15));
-        bot.send_photo(&SendPhotoParams::new(
-            chat_id.clone(),
-            FileEnum::StringVariant(url.to_string()),
-        ))
-        .map_err(|err| anyhow::anyhow!("{:?}", err))?;
+
+        let mut send_photo_params =
+            SendPhotoParams::new(chat_id.clone(), FileEnum::StringVariant(url.to_string()));
+        send_photo_params.set_parse_mode(Some("Html".to_string()));
+        send_photo_params.set_caption(Some(format!(
+            r#"<a href="{}">Quelle (Facebook)</a>"#,
+            page_url
+        )));
+        bot.send_photo(&send_photo_params)
+            .map_err(|err| anyhow::anyhow!("{:?}", err))?;
     }
 
     Ok(())
