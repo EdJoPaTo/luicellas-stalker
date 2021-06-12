@@ -1,0 +1,17 @@
+[Unit]
+Description=Run Luicellas Stalker
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=20
+ExecStart=/usr/local/bin/luicellas-stalker
+WorkingDirectory=/var/local/lib/luicellas-stalker/
+User=pi
+Group=pi
+
+[Install]
+WantedBy=multi-user.target
