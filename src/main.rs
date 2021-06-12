@@ -1,6 +1,7 @@
 use std::{
     fs::{read_to_string, write},
     string::ToString,
+    thread::sleep,
     time::Duration,
 };
 
@@ -10,14 +11,17 @@ use regex::Regex;
 const SENT_FILE: &str = "sent.txt";
 
 fn main() {
+    let content_regex = Regex::new(r#""contentUrl":"([^"]+)"#).unwrap();
+
     let bot_token = std::env::var("BOT_TOKEN").expect("BOT_TOKEN is not set");
     let bot = frankenstein::Api::new(bot_token);
 
     let chat_id = ChatIdEnum::IntegerVariant(-1_001_306_037_773); // https://telegram.me/LuicellasLangeReihe
+
     println!("Hello, world!");
 
     match get_picture_urls() {
-        Ok(pictures) => {
+        Ok(picture_pages) => {
             let mut already_sent = read_to_string(SENT_FILE)
                 .unwrap_or_default()
                 .lines()
@@ -25,15 +29,14 @@ fn main() {
                 .map(ToString::to_string)
                 .collect::<Vec<_>>();
 
-            for p in pictures {
-                if !already_sent.contains(&p) {
-                    println!("unknown pic {}", p);
-                    bot.send_photo(&SendPhotoParams::new(
-                        chat_id.clone(),
-                        FileEnum::StringVariant(p.to_string()),
-                    ))
-                    .unwrap();
-                    already_sent.push(p);
+            for url in picture_pages {
+                if !already_sent.contains(&url) {
+                    match handle_picture_page(&content_regex, &bot, &chat_id, &url) {
+                        Ok(_) => {
+                            already_sent.push(url);
+                        }
+                        Err(err) => eprintln!("picture page ERROR {}", err),
+                    }
                 }
             }
 
@@ -59,31 +62,41 @@ fn get_picture_urls() -> anyhow::Result<Vec<String>> {
     let photo_page_regex =
         Regex::new(r#"https:\\/\\/www.facebook.com\\/luicellaslangereihe\\/photos\\/a[^"]+"#)
             .unwrap();
-    let content_regex = Regex::new(r#""contentUrl":"([^"]+)"#).unwrap();
-
     let main_body = get("https://de-de.facebook.com/pg/luicellaslangereihe/photos/")?;
-    let mut pictures = Vec::new();
-    for bla in photo_page_regex.captures_iter(&main_body) {
-        let url = &bla[0]
+    let mut picture_pages = Vec::new();
+    for c in photo_page_regex.captures_iter(&main_body) {
+        let url = c[0]
             .replace("\\/", "/")
             .replace("www.facebook.com", "m.facebook.com");
-
-        match handle_each_picture_page(&content_regex, url) {
-            Ok(mut pics) => pictures.append(&mut pics),
-            Err(err) => eprintln!("picture page ERROR {}", err),
-        }
+        picture_pages.push(url);
     }
 
     // Newest Picture is at the top, so reverse them to have it at the end (→ handle oldest first)
-    pictures.reverse();
-    Ok(pictures)
+    picture_pages.reverse();
+    Ok(picture_pages)
 }
 
-fn handle_each_picture_page(re: &Regex, url: &str) -> anyhow::Result<Vec<String>> {
-    println!("get image from picture page {}", url);
-    let hits = re
+fn handle_picture_page(
+    re: &Regex,
+    bot: &frankenstein::Api,
+    chat_id: &ChatIdEnum,
+    url: &str,
+) -> anyhow::Result<()> {
+    println!("\nhandle_picture_page {}", url);
+    let urls = re
         .captures_iter(&get(url)?)
         .map(|o| o[1].replace("\\/", "/"))
         .collect::<Vec<_>>();
-    Ok(hits)
+
+    for url in urls {
+        println!("wait then send to telegram chat... {}", url);
+        sleep(Duration::from_secs(15));
+        bot.send_photo(&SendPhotoParams::new(
+            chat_id.clone(),
+            FileEnum::StringVariant(url.to_string()),
+        ))
+        .map_err(|err| anyhow::anyhow!("{:?}", err))?;
+    }
+
+    Ok(())
 }
