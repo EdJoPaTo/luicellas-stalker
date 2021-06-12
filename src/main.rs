@@ -20,6 +20,8 @@ fn main() {
 
     match get_picture_urls() {
         Ok(picture_pages) => {
+            println!("found {} picture_pages", picture_pages.len());
+
             let mut already_sent = read_to_string(SENT_FILE)
                 .unwrap_or_default()
                 .lines()
