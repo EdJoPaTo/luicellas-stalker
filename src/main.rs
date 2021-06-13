@@ -5,16 +5,16 @@ use std::{
     time::Duration,
 };
 
-use frankenstein::{ChatIdEnum, FileEnum, SendPhotoParams, TelegramApi};
+use frankenstein::{api_params::File, ChatId, SendPhotoParams, TelegramApi};
 use regex::Regex;
 
 const SENT_FILE: &str = "sent.txt";
 
 fn main() {
     let bot_token = std::env::var("BOT_TOKEN").expect("BOT_TOKEN is not set");
-    let bot = frankenstein::Api::new(bot_token);
+    let bot = frankenstein::Api::new(&bot_token);
 
-    let chat_id = ChatIdEnum::IntegerVariant(-1_001_306_037_773); // https://telegram.me/LuicellasLangeReihe
+    let chat_id = ChatId::Integer(-1_001_306_037_773); // https://telegram.me/LuicellasLangeReihe
 
     println!("Hello, world!");
 
@@ -77,7 +77,7 @@ fn get_picture_urls() -> anyhow::Result<Vec<String>> {
 
 fn handle_picture_page(
     bot: &frankenstein::Api,
-    chat_id: &ChatIdEnum,
+    chat_id: &ChatId,
     page_url: &str,
 ) -> anyhow::Result<()> {
     println!("\nhandle_picture_page {}", page_url);
@@ -93,7 +93,7 @@ fn handle_picture_page(
         sleep(Duration::from_secs(15));
 
         let mut send_photo_params =
-            SendPhotoParams::new(chat_id.clone(), FileEnum::StringVariant(url.to_string()));
+            SendPhotoParams::new(chat_id.clone(), File::String(url.to_string()));
         send_photo_params.set_parse_mode(Some("Html".to_string()));
         send_photo_params.set_caption(Some(format!(
             r#"<a href="{}">Quelle (Facebook)</a>"#,

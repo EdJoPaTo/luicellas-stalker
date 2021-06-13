@@ -16,9 +16,6 @@ lto = true
 
 [dependencies]
 anyhow = "1"
+frankenstein = "0.4"
 regex = "1"
 ureq = "2.1.1"
-
-[dependencies.frankenstein]
-git = "https://github.com/EdJoPaTo/frankenstein.git"
-branch = "isize"
