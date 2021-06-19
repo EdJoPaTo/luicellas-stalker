@@ -87,6 +87,9 @@ fn handle_picture_page(
         .captures_iter(&body)
         .map(|o| o[1].replace("\\/", "/"))
         .collect::<Vec<_>>();
+    if urls.is_empty() {
+        return Err(anyhow::anyhow!("no image urls found"));
+    }
 
     for url in urls {
         println!("wait then send to telegram chat... {}", url);
