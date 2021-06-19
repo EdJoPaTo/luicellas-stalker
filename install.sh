@@ -13,6 +13,6 @@ sudo cp -uv ./*.service ./*.timer /usr/local/lib/systemd/system/
 sudo systemctl daemon-reload
 
 # stop, replace and start new version
-sudo systemctl stop luicellas-stalker.service
+sudo systemctl stop luicellas-stalker.service luicellas-stalker.timer
 sudo cp -v target/release/luicellas-stalker /usr/local/bin
 sudo systemctl enable --now luicellas-stalker.timer
