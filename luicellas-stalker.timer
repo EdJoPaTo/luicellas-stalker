@@ -3,7 +3,7 @@ Description=Run Luicellas Stalker
 
 [Timer]
 OnBootSec=5min
-OnUnitActiveSec=35min
+OnCalendar=8..19:12/30:0
 RandomizedDelaySec=1min
 
 [Install]
