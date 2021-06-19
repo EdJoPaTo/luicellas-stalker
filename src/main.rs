@@ -7,6 +7,7 @@ use std::{
 
 use frankenstein::{api_params::File, ChatId, SendPhotoParams, TelegramApi};
 use regex::Regex;
+use scraper::Selector;
 
 const SENT_FILE: &str = "sent.txt";
 
@@ -31,6 +32,9 @@ fn main() {
 
             for url in picture_pages {
                 if !already_sent.contains(&url) {
+                    println!("wait before continue");
+                    sleep(Duration::from_secs(15));
+
                     match handle_picture_page(&bot, &chat_id, &url) {
                         Ok(_) => {
                             already_sent.push(url);
@@ -46,12 +50,10 @@ fn main() {
     }
 }
 
+const USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0";
 fn get(url: &str) -> anyhow::Result<String> {
     let body = ureq::get(url)
-        .set(
-            "USER-AGENT",
-            "Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0",
-        )
+        .set("USER-AGENT", USER_AGENT)
         .timeout(Duration::from_secs(5))
         .call()?
         .into_string()?;
@@ -81,30 +83,38 @@ fn handle_picture_page(
     page_url: &str,
 ) -> anyhow::Result<()> {
     println!("\nhandle_picture_page {}", page_url);
+    let selector = Selector::parse("meta[property]").unwrap();
+
     let body = get(page_url)?;
-    let urls = Regex::new(r#""contentUrl":"([^"]+)"#)
-        .unwrap()
-        .captures_iter(&body)
-        .map(|o| o[1].replace("\\/", "/"))
-        .collect::<Vec<_>>();
-    if urls.is_empty() {
-        return Err(anyhow::anyhow!("no image urls found"));
-    }
+    let html = scraper::Html::parse_document(&body);
+    let metas = html.select(&selector).map(|o| o.html()).collect::<Vec<_>>();
 
-    for url in urls {
-        println!("wait then send to telegram chat... {}", url);
-        sleep(Duration::from_secs(15));
+    let image = find_content(&metas, "og:image")
+        .ok_or_else(|| anyhow::anyhow!("image not found"))?
+        .replace("&amp;", "&");
+    let description = find_content(&metas, "og:description")
+        .ok_or_else(|| anyhow::anyhow!("description not found"))?;
+    let url = find_content(&metas, "og:url").ok_or_else(|| anyhow::anyhow!("url not found"))?;
 
-        let mut send_photo_params =
-            SendPhotoParams::new(chat_id.clone(), File::String(url.to_string()));
-        send_photo_params.set_parse_mode(Some("Html".to_string()));
-        send_photo_params.set_caption(Some(format!(
-            r#"<a href="{}">Quelle (Facebook)</a>"#,
-            page_url
-        )));
-        bot.send_photo(&send_photo_params)
-            .map_err(|err| anyhow::anyhow!("{:?}", err))?;
-    }
+    let mut send_photo_params = SendPhotoParams::new(chat_id.clone(), File::String(image));
+    send_photo_params.set_parse_mode(Some("Html".to_string()));
+    send_photo_params.set_caption(Some(format!(
+        r#"{}
+<a href="{}">Quelle (Facebook)</a>"#,
+        description, url
+    )));
+    bot.send_photo(&send_photo_params)
+        .map_err(|err| anyhow::anyhow!("{:?}", err))?;
 
     Ok(())
+}
+
+fn find_content<'s, S>(metas: S, property: &str) -> Option<&'s str>
+where
+    S: IntoIterator<Item = &'s String>,
+{
+    let content_regex = Regex::new(r#"content="([^"]+)"#).unwrap();
+    let hit = metas.into_iter().find(|o| o.contains(property))?;
+    let content = content_regex.captures(hit)?.get(1)?.as_str();
+    Some(content)
 }

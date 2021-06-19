@@ -18,4 +18,5 @@ lto = true
 anyhow = "1"
 frankenstein = "0.4"
 regex = "1"
-ureq = "2.1.1"
+scraper = "0.12"
+ureq = "2"
