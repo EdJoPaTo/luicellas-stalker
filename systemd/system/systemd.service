@@ -1,5 +1,5 @@
 [Unit]
-Description=Run Luicellas Stalker
+Description=Run luicellas-stalker
 Wants=network-online.target
 After=network-online.target
 StartLimitIntervalSec=0
@@ -9,8 +9,8 @@ Type=simple
 Environment="BOT_TOKEN="
 ExecStart=/usr/local/bin/luicellas-stalker
 WorkingDirectory=/var/local/lib/luicellas-stalker/
-User=pi
-Group=pi
+User=luicellas-stalker
+Group=luicellas-stalker
 
 [Install]
 WantedBy=multi-user.target

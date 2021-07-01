@@ -1,5 +1,5 @@
 [Unit]
-Description=Run Luicellas Stalker
+Description=Run luicellas-stalker
 
 [Timer]
 OnBootSec=5min
