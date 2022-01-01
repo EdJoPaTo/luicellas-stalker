@@ -16,7 +16,7 @@ lto = true
 
 [dependencies]
 anyhow = "1"
-frankenstein = "0.7"
+frankenstein = "0.9"
 regex = "1"
 scraper = "0.12"
 ureq = "2"

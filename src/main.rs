@@ -5,7 +5,7 @@ use std::{
     time::Duration,
 };
 
-use frankenstein::{api_params::File, ChatId, SendPhotoParams, TelegramApi};
+use frankenstein::{api_params::File, ChatId, SendPhotoParamsBuilder, TelegramApi};
 use regex::Regex;
 use scraper::Selector;
 
@@ -96,13 +96,16 @@ fn handle_picture_page(
         .ok_or_else(|| anyhow::anyhow!("description not found"))?;
     let url = find_content(&metas, "og:url").ok_or_else(|| anyhow::anyhow!("url not found"))?;
 
-    let mut send_photo_params = SendPhotoParams::new(chat_id.clone(), File::String(image));
-    send_photo_params.set_parse_mode(Some("Html".to_string()));
-    send_photo_params.set_caption(Some(format!(
-        r#"{}
+    let send_photo_params = SendPhotoParamsBuilder::default()
+        .chat_id(chat_id.clone())
+        .photo(File::String(image))
+        .parse_mode("Html")
+        .caption(format!(
+            r#"{}
 <a href="{}">Quelle (Facebook)</a>"#,
-        description, url
-    )));
+            description, url
+        ))
+        .build()?;
     bot.send_photo(&send_photo_params)
         .map_err(|err| anyhow::anyhow!("{:?}", err))?;
 
